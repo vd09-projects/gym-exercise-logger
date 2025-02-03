@@ -1,134 +1,166 @@
+// src/screens/ProgressScreen.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, FlatList, TouchableOpacity, Platform } from 'react-native';
+import {
+  View, Text, Button, StyleSheet, FlatList, TouchableOpacity, Platform
+} from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../services/firebaseConfig';
+import { collection, query, where, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { db } from '../services/firebase';
 import { useAuthUser } from '../hooks/useAuthUser';
+import TableRow from '../components/TableRow';
 
 interface LogEntry {
-    id: string;
-    timestamp: any;
-    values: { [key: string]: string };
-    exerciseId: string;
+  id: string;
+  timestamp: Date;
+  values: { [key: string]: string };
+  exerciseId: string;
+  exerciseName?: string;    // We’ll store the exercise name after we fetch it
 }
 
 export default function ProgressScreen() {
-    const { user } = useAuthUser();
-    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-    const [logs, setLogs] = useState<LogEntry[]>([]);
-    const [showPicker, setShowPicker] = useState(false); // Show date picker only on button click
+  const { user } = useAuthUser();
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [showPicker, setShowPicker] = useState(false);
 
-    const handleDateChange = (event: any, date?: Date) => {
-        if (date) {
-            setSelectedDate(date);
-        }
-        setShowPicker(false); // Hide the picker after selection
-    };
+  const handleDateChange = (event: any, date?: Date) => {
+    if (date) setSelectedDate(date);
+    setShowPicker(false);
+  };
 
-    const fetchLogsForDay = () => {
-        if (!user) return;
-        setLogs([]); // Clear previous logs before fetching
+  const fetchLogsForDay = () => {
+    if (!user) return;
+    setLogs([]);
 
-        console.log("fetchLogsForDay")
-        const exercisesRef = collection(db, 'users', user.uid, 'exercises');
-        onSnapshot(exercisesRef, (exerciseSnapshot) => {
-            exerciseSnapshot.forEach((exerciseDoc) => {
-                const exerciseId = exerciseDoc.id;
-                console.log("exerciseId", exerciseId)
+    const exercisesRef = collection(db, 'users', user.uid, 'exercises');
+    onSnapshot(exercisesRef, (exerciseSnapshot) => {
+      exerciseSnapshot.forEach(async (exerciseDocSnap) => {
+        const exerciseId = exerciseDocSnap.id;
+        const exerciseName = exerciseDocSnap.data().exerciseName;
 
-                // Define start and end of the selected day
-                const startOfDay = new Date(selectedDate);
-                startOfDay.setHours(0, 0, 0, 0);
-                const endOfDay = new Date(selectedDate);
-                endOfDay.setHours(23, 59, 59, 999);
+        // define day range
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
 
-                const logsRef = collection(db, 'users', user.uid, 'exercises', exerciseId, 'logs');
-                const logsQuery = query(
-                    logsRef,
-                    where('timestamp', '>=', startOfDay),
-                    where('timestamp', '<=', endOfDay),
-                    orderBy('timestamp', 'asc')
-                );
-                console.log("logsQuery", startOfDay, endOfDay)
+        const logsRef = collection(db, 'users', user.uid, 'exercises', exerciseId, 'logs');
+        const logsQuery = query(
+          logsRef,
+          where('timestamp', '>=', startOfDay),
+          where('timestamp', '<=', endOfDay),
+          orderBy('timestamp', 'asc')
+        );
 
-                onSnapshot(logsQuery, (logsSnapshot) => {
-                    const dayLogs: LogEntry[] = [];
-                    logsSnapshot.forEach((logDoc) => {
-                        console.log("logDoc", logDoc.id, logDoc.data(), logDoc.data().timestamp)
-                        dayLogs.push({
-                            id: logDoc.id,
-                            timestamp: logDoc.data().timestamp.toDate(),
-                            values: logDoc.data().values,
-                            exerciseId,
-                        });
-                    });
-
-                    setLogs((prev) => [...prev, ...dayLogs]); // Append new logs
-                });
+        onSnapshot(logsQuery, (logsSnapshot) => {
+          const dayLogs: LogEntry[] = [];
+          logsSnapshot.forEach((logDoc) => {
+            const data = logDoc.data();
+            dayLogs.push({
+              id: logDoc.id,
+              timestamp: data.timestamp.toDate(),
+              values: data.values,
+              exerciseId: exerciseId,
+              exerciseName: exerciseName, // attach name here
             });
+          });
+          setLogs((prev) => [...prev, ...dayLogs]);
         });
-    };
+      });
+    });
+  };
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Progress Screen</Text>
+  // Basic date formatting
+  const formatTimestamp = (date: Date) => {
+    return date.toLocaleString(); // or use date-fns for advanced formatting
+  };
 
-            {/* Date Picker Button */}
-            <TouchableOpacity style={styles.dateButton} onPress={() => setShowPicker(true)}>
-                <Text style={styles.dateText}>{selectedDate.toDateString()}</Text>
-            </TouchableOpacity>
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Workout Progress</Text>
 
-            {/* Date Picker (Shown Only on Button Click) */}
-            {showPicker && (
-                <DateTimePicker
-                    value={selectedDate}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={handleDateChange}
-                />
-            )}
+      <TouchableOpacity style={styles.dateButton} onPress={() => setShowPicker(true)}>
+        <Text style={styles.dateText}>{selectedDate.toDateString()}</Text>
+      </TouchableOpacity>
 
-            {/* Fetch Logs Button */}
-            <Button title="Fetch Logs" onPress={fetchLogsForDay} />
+      {showPicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleDateChange}
+        />
+      )}
 
-            {/* Show logs */}
-            <Text style={styles.subtitle}>Logs for {selectedDate.toDateString()}</Text>
-            <FlatList
-                data={logs}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    <View style={styles.logItem}>
-                        <Text>Exercise ID: {item.exerciseId}</Text>
-                        <Text>Timestamp: {new Date(item.timestamp).toLocaleString()}</Text>
-                        {Object.keys(item.values).map((field) => (
-                            <Text key={field}>
-                                {field}: {item.values[field]}
-                            </Text>
-                        ))}
-                    </View>
-                )}
+      <View style={{ marginVertical: 8 }}>
+        <Button title="Fetch Logs" onPress={fetchLogsForDay} color="#FF6A00" />
+      </View>
+
+      <Text style={styles.subtitle}>Logs for {selectedDate.toDateString()}</Text>
+
+      {/* Tabular Display */}
+      <View style={styles.tableHeader}>
+        <Text style={[styles.tableHeaderText, { flex: 2 }]}>Exercise</Text>
+        <Text style={[styles.tableHeaderText, { flex: 2 }]}>Timestamp</Text>
+        <Text style={[styles.tableHeaderText, { flex: 3 }]}>Fields</Text>
+      </View>
+
+      <FlatList
+        data={logs}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => {
+          return (
+            <TableRow
+              exerciseName={item.exerciseName || 'N/A'}
+              timestamp={formatTimestamp(item.timestamp)}
+              values={item.values}
             />
-        </View>
-    );
+          );
+        }}
+      />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 16 },
-    title: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
-    subtitle: { fontSize: 16, marginTop: 10, marginBottom: 4 },
-    dateButton: {
-        backgroundColor: '#007AFF',
-        padding: 10,
-        borderRadius: 6,
-        alignItems: 'center',
-        marginVertical: 8,
-    },
-    dateText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
-    logItem: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        padding: 8,
-        marginVertical: 4,
-        borderRadius: 6,
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#121212',
+    padding: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 8,
+  },
+  dateButton: {
+    backgroundColor: '#FF6A00',
+    padding: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  dateText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    fontSize: 16,
+    marginTop: 10,
+    marginBottom: 4,
+    color: '#FFF',
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    borderBottomWidth: 2,
+    borderBottomColor: '#FF6A00',
+    paddingBottom: 6,
+    marginBottom: 6,
+  },
+  tableHeaderText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
 });

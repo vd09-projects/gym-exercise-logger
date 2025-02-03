@@ -1,67 +1,55 @@
 // src/screens/ExerciseSetupScreen.tsx
 
 import React, { FC, useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
-import { db } from '../services/firebaseConfig'; // Your Firestore instance
-import { doc, collection, addDoc } from 'firebase/firestore';
-import { useAuthUser } from '../hooks/useAuthUser'; // Hypothetical hook if you store current user
+import {
+  View, Text, TextInput, Button, Alert, StyleSheet, Modal, TouchableOpacity
+} from 'react-native';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../services/firebase';
+import { useAuthUser } from '../hooks/useAuthUser';
+import TemplateModal from '../components/TemplateModal';
 
 type Field = {
   label: string;
-  type: string; // Could be 'number', 'text', etc.
+  type: string; // 'number' | 'text' etc.
 };
 
 interface ExerciseSetupProps {}
 
 const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
+  const { user } = useAuthUser();
   const [category, setCategory] = useState('');
   const [exerciseName, setExerciseName] = useState('');
   const [fields, setFields] = useState<Field[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  // For selecting a standard template
-  const standardTemplates = {
-    weightlifting: [
-      { label: 'Sets', type: 'number' },
-      { label: 'Weight', type: 'number' },
-      { label: 'Reps', type: 'number' },
-    ],
-    cardio: [
-      { label: 'Time', type: 'number' },
-      { label: 'Distance', type: 'number' },
-    ],
+  const handleSelectTemplate = (templateFields: Field[]) => {
+    // Combine or overwrite the fields array
+    setFields(templateFields);
+    setModalVisible(false);
   };
 
-  const { user } = useAuthUser(); // hypothetical, to get userID
-
-  const handleSelectTemplate = (templateKey: 'weightlifting' | 'cardio') => {
-    setFields(standardTemplates[templateKey]);
-  };
-
-  // Add a custom field
   const handleAddCustomField = () => {
     const newField: Field = { label: 'Custom Field', type: 'text' };
-    setFields(prev => [...prev, newField]);
+    setFields((prev) => [...prev, newField]);
   };
 
   const handleSaveExercise = async () => {
-    try {
-      if (!user || !user.uid) {
-        Alert.alert('Error', 'No user logged in.');
-        return;
-      }
-      if (!category || !exerciseName) {
-        Alert.alert('Validation', 'Category and Exercise Name are required.');
-        return;
-      }
+    if (!user || !user.uid) {
+      Alert.alert('Error', 'No user logged in.');
+      return;
+    }
+    if (!category.trim() || !exerciseName.trim()) {
+      Alert.alert('Validation', 'Category and Exercise Name are required.');
+      return;
+    }
 
-      const docRef = await addDoc(
-        collection(db, 'users', user.uid, 'exercises'),
-        {
-          category,
-          exerciseName,
-          fields,
-        }
-      );
+    try {
+      const docRef = await addDoc(collection(db, 'users', user.uid, 'exercises'), {
+        category,
+        exerciseName,
+        fields,
+      });
       Alert.alert('Success', `Exercise saved with ID: ${docRef.id}`);
       setCategory('');
       setExerciseName('');
@@ -76,35 +64,45 @@ const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
     <View style={styles.container}>
       <Text style={styles.heading}>Add a New Exercise</Text>
 
+      {/* Category Input */}
       <Text style={styles.label}>Category</Text>
       <TextInput
         style={styles.input}
         placeholder="e.g., Chest"
+        placeholderTextColor="#888"
         value={category}
         onChangeText={setCategory}
       />
 
+      {/* Exercise Name Input */}
       <Text style={styles.label}>Exercise Name</Text>
       <TextInput
         style={styles.input}
         placeholder="e.g., Bench Press"
+        placeholderTextColor="#888"
         value={exerciseName}
         onChangeText={setExerciseName}
       />
 
-      <View style={styles.buttonRow}>
+      {/* CHOOSE STANDARD TEMPLATE Button */}
+      <View style={{ marginVertical: 8 }}>
         <Button
-          title="Use Weightlifting Template"
-          onPress={() => handleSelectTemplate('weightlifting')}
-        />
-        <Button
-          title="Use Cardio Template"
-          onPress={() => handleSelectTemplate('cardio')}
+          title="Choose Standard Template"
+          onPress={() => setModalVisible(true)}
+          color="#FF6A00"
         />
       </View>
 
-      <Button title="Add Custom Field" onPress={handleAddCustomField} />
+      {/* Add Custom Field */}
+      <View style={{ marginVertical: 8 }}>
+        <Button
+          title="Add Custom Field"
+          onPress={handleAddCustomField}
+          color="#FF6A00"
+        />
+      </View>
 
+      {/* Current Fields */}
       <Text style={styles.subHeading}>Current Fields:</Text>
       {fields.map((field, index) => (
         <Text key={index} style={styles.fieldListItem}>
@@ -112,48 +110,59 @@ const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
         </Text>
       ))}
 
-      <Button title="Save Exercise" onPress={handleSaveExercise} />
+      {/* Save Exercise */}
+      <View style={{ marginTop: 16 }}>
+        <Button title="Save Exercise" onPress={handleSaveExercise} color="#FF6A00" />
+      </View>
+
+      {/* Template Modal */}
+      <TemplateModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSelectTemplate={handleSelectTemplate}
+      />
     </View>
   );
-}
+};
 
 export default ExerciseSetupScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#121212',
     padding: 16,
-    backgroundColor: '#fff',
   },
   heading: {
     fontSize: 22,
     fontWeight: 'bold',
+    color: '#FFF',
     marginBottom: 12,
+  },
+  label: {
+    fontSize: 14,
+    color: '#FFF',
+    marginTop: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#FF6A00',
+    borderRadius: 6,
+    padding: 8,
+    color: '#FFF',
+    backgroundColor: '#1A1A1A',
+    marginBottom: 8,
   },
   subHeading: {
     marginTop: 16,
     fontSize: 18,
     fontWeight: '600',
+    color: '#FFF',
     marginBottom: 8,
-  },
-  label: {
-    fontSize: 14,
-    marginTop: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    padding: 8,
-    marginBottom: 8,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 8,
   },
   fieldListItem: {
     fontSize: 14,
+    color: '#FFF',
     marginBottom: 4,
   },
 });

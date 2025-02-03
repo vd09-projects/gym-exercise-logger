@@ -2,19 +2,19 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { collection, query, where, onSnapshot, addDoc, doc, Timestamp } from 'firebase/firestore';
-import { db } from '../services/firebaseConfig';
+import { collection, onSnapshot, addDoc, doc, Timestamp } from 'firebase/firestore';
+import { db } from '../services/firebase/firebaseConfig';
 import { useAuthUser } from '../hooks/useAuthUser';
 
 interface Exercise {
-  id: string;              // Firestore doc ID
+  id: string;
   category: string;
   exerciseName: string;
   fields: { label: string; type: string }[];
 }
 
 interface FieldValue {
-  [label: string]: string; // e.g., { Sets: '3', Weight: '100', Reps: '8' }
+  [label: string]: string;
 }
 
 export default function ExerciseLogScreen() {
@@ -24,7 +24,6 @@ export default function ExerciseLogScreen() {
   const [selectedExerciseId, setSelectedExerciseId] = useState('');
   const [fieldValues, setFieldValues] = useState<FieldValue>({});
 
-  // Fetch exercises from Firestore when the component mounts
   useEffect(() => {
     if (!user) return;
 
@@ -40,16 +39,10 @@ export default function ExerciseLogScreen() {
     return () => unsubscribe();
   }, [user]);
 
-  // Get unique categories from the exercises
   const categories = Array.from(new Set(exercises.map((ex) => ex.category)));
-
-  // Filter exercises by selected category
   const filteredExercises = exercises.filter((ex) => ex.category === selectedCategory);
-
-  // Find the selected exercise doc
   const selectedExercise = exercises.find((ex) => ex.id === selectedExerciseId);
 
-  // Update field value in state
   const handleChangeFieldValue = (fieldLabel: string, newValue: string) => {
     setFieldValues((prev) => ({ ...prev, [fieldLabel]: newValue }));
   };
@@ -67,13 +60,12 @@ export default function ExerciseLogScreen() {
     try {
       const exerciseDocRef = doc(db, 'users', user.uid, 'exercises', selectedExercise.id);
       await addDoc(collection(exerciseDocRef, 'logs'), {
-        timestamp: Timestamp.now(), // or store as a Firebase Timestamp
+        timestamp: Timestamp.now(),
         values: { ...fieldValues },
       });
 
       Alert.alert('Success', 'Workout log saved!');
 
-      // Reset the form
       setSelectedCategory('');
       setSelectedExerciseId('');
       setFieldValues({});
@@ -86,35 +78,39 @@ export default function ExerciseLogScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Select a Category</Text>
-      <Picker
-        selectedValue={selectedCategory}
-        onValueChange={(itemValue) => {
-          setSelectedCategory(itemValue);
-          setSelectedExerciseId(''); // reset if switching category
-        }}
-      >
-        <Picker.Item label="-- Choose a Category --" value="" />
-        {categories.map((cat) => (
-          <Picker.Item key={cat} label={cat} value={cat} />
-        ))}
-      </Picker>
+      <View style={styles.pickerContainer}>
+        <Picker
+          style={styles.picker}
+          dropdownIconColor="#FF6A00"
+          selectedValue={selectedCategory}
+          onValueChange={(itemValue) => {
+            setSelectedCategory(itemValue);
+            setSelectedExerciseId('');
+          }}
+        >
+          <Picker.Item label="-- Choose a Category --" value="" />
+          {categories.map((cat) => (
+            <Picker.Item key={cat} label={cat} value={cat} />
+          ))}
+        </Picker>
+      </View>
 
       {selectedCategory !== '' && (
         <>
           <Text style={styles.title}>Select an Exercise</Text>
-          <Picker
-            selectedValue={selectedExerciseId}
-            onValueChange={(itemValue) => setSelectedExerciseId(itemValue)}
-          >
-            <Picker.Item label="-- Choose an Exercise --" value="" />
-            {filteredExercises.map((ex) => (
-              <Picker.Item
-                key={ex.id}
-                label={ex.exerciseName}
-                value={ex.id}
-              />
-            ))}
-          </Picker>
+          <View style={styles.pickerContainer}>
+            <Picker
+              style={styles.picker}
+              dropdownIconColor="#FF6A00"
+              selectedValue={selectedExerciseId}
+              onValueChange={(itemValue) => setSelectedExerciseId(itemValue)}
+            >
+              <Picker.Item label="-- Choose an Exercise --" value="" />
+              {filteredExercises.map((ex) => (
+                <Picker.Item key={ex.id} label={ex.exerciseName} value={ex.id} />
+              ))}
+            </Picker>
+          </View>
         </>
       )}
 
@@ -127,13 +123,16 @@ export default function ExerciseLogScreen() {
               <TextInput
                 style={styles.fieldInput}
                 keyboardType={field.type === 'number' ? 'numeric' : 'default'}
+                placeholder={field.type === 'number' ? '0' : 'Enter value'}
+                placeholderTextColor="#888"
                 value={fieldValues[field.label] || ''}
                 onChangeText={(text) => handleChangeFieldValue(field.label, text)}
               />
             </View>
           ))}
-
-          <Button title="Save Log" onPress={handleSaveLog} />
+          <View style={styles.saveButtonContainer}>
+            <Button title="Save Log" onPress={handleSaveLog} color="#FF6A00" />
+          </View>
         </>
       )}
     </View>
@@ -141,8 +140,28 @@ export default function ExerciseLogScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  title: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
+  container: {
+    flex: 1,
+    backgroundColor: '#121212',
+    padding: 16,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#FF6A00',
+    borderRadius: 6,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  picker: {
+    color: '#FFFFFF', 
+    backgroundColor: '#1A1A1A',
+  },
   fieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -151,13 +170,19 @@ const styles = StyleSheet.create({
   fieldLabel: {
     width: 100,
     fontWeight: '600',
+    color: '#FFFFFF',
   },
   fieldInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#FF6A00',
     borderRadius: 6,
     padding: 8,
     marginLeft: 8,
+    color: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
+  },
+  saveButtonContainer: {
+    marginTop: 16,
   },
 });
