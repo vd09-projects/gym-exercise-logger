@@ -1,19 +1,22 @@
-// src/navigation/AppNavigator.tsx
-
+// src/navigation/AppNavigator.tsx (simplified)
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { useAuthUser } from '../hooks/useAuthUser';
 import AuthNavigator from './AuthNavigator';
-import MainNavigator from './MainNavigator';
+import LayoutScreen from '../screens/LayoutScreen'; // new
 
 export default function AppNavigator() {
-    const { user } = useAuthUser();
+  const { user } = useAuthUser();
 
-    return (
-        <NavigationContainer>
-            {/* If user is authenticated, show the Main flow; otherwise, show the Auth flow */}
-            {user ? <MainNavigator /> : <AuthNavigator />}
-        </NavigationContainer>
-    );
+  return (
+    <NavigationContainer>
+      {user ? (
+        // If user is logged in, show the new Layout with tabs
+        <LayoutScreen />
+      ) : (
+        // Otherwise show sign-in / sign-up flow
+        <AuthNavigator />
+      )}
+    </NavigationContainer>
+  );
 }

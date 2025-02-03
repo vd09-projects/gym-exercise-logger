@@ -32,7 +32,8 @@ export default function MainNavigator() {
       <Stack.Screen
         name="ExerciseLog"
         component={ExerciseLogScreen}
-        options={{ title: 'Log Workout' }}
+        // Hide the default header so we can show our own
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Progress"
