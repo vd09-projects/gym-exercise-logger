@@ -103,7 +103,10 @@ export default function ExerciseLogScreen() {
               style={styles.picker}
               dropdownIconColor="#FF6A00"
               selectedValue={selectedExerciseId}
-              onValueChange={(itemValue) => setSelectedExerciseId(itemValue)}
+              onValueChange={(itemValue) => {
+                setSelectedExerciseId(itemValue);
+                setFieldValues({}); // Clear fieldValues when a different exercise is selected
+              }}
             >
               <Picker.Item label="-- Choose an Exercise --" value="" />
               {filteredExercises.map((ex) => (
@@ -122,7 +125,8 @@ export default function ExerciseLogScreen() {
               <Text style={styles.fieldLabel}>{field.label}</Text>
               <TextInput
                 style={styles.fieldInput}
-                keyboardType={field.type === 'number' ? 'numeric' : 'default'}
+                // keyboardType={field.type === 'number' ? 'decimal-pad' : 'default'}
+                keyboardType='default'
                 placeholder={field.type === 'number' ? '0' : 'Enter value'}
                 placeholderTextColor="#888"
                 value={fieldValues[field.label] || ''}
@@ -159,7 +163,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   picker: {
-    color: '#FFFFFF', 
+    color: '#FFFFFF',
     backgroundColor: '#1A1A1A',
   },
   fieldRow: {

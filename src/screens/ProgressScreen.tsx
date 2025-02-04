@@ -1,123 +1,212 @@
 // src/screens/ProgressScreen.tsx
-import React, { useState, useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import {
-  View, Text, Button, StyleSheet, FlatList, TouchableOpacity, Platform
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ScrollView,
+  Alert,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { collection, query, where, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { Picker } from '@react-native-picker/picker';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuthUser } from '../hooks/useAuthUser';
-import TableRow from '../components/TableRow';
 
-interface LogEntry {
+interface Exercise {
+  id: string;
+  category: string;
+  exerciseName: string;
+  fields: { label: string; type: string }[];
+}
+
+interface LogData {
   id: string;
   timestamp: Date;
   values: { [key: string]: string };
-  exerciseId: string;
-  exerciseName?: string;    // We’ll store the exercise name after we fetch it
+}
+
+// We'll group logs by "dayString" (e.g., "2025-02-03")
+interface DayLogs {
+  dayString: string;
+  logs: LogData[];
 }
 
 export default function ProgressScreen() {
   const { user } = useAuthUser();
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [showPicker, setShowPicker] = useState(false);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedExerciseId, setSelectedExerciseId] = useState('');
+  const [dayLogs, setDayLogs] = useState<DayLogs[]>([]); // array of grouped logs
 
-  const handleDateChange = (event: any, date?: Date) => {
-    if (date) setSelectedDate(date);
-    setShowPicker(false);
-  };
-
-  const fetchLogsForDay = () => {
+  // 1. Fetch all exercises for this user, store them in state
+  useEffect(() => {
     if (!user) return;
-    setLogs([]);
-
     const exercisesRef = collection(db, 'users', user.uid, 'exercises');
-    onSnapshot(exercisesRef, (exerciseSnapshot) => {
-      exerciseSnapshot.forEach(async (exerciseDocSnap) => {
-        const exerciseId = exerciseDocSnap.id;
-        const exerciseName = exerciseDocSnap.data().exerciseName;
+    const unsubscribe = onSnapshot(exercisesRef, (snapshot) => {
+      const data: Exercise[] = [];
+      snapshot.forEach((docSnap) => {
+        data.push({ id: docSnap.id, ...docSnap.data() } as Exercise);
+      });
+      setExercises(data);
+    });
+    return () => unsubscribe();
+  }, [user]);
 
-        // define day range
-        const startOfDay = new Date(selectedDate);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(selectedDate);
-        endOfDay.setHours(23, 59, 59, 999);
+  // 2. Filter categories & exercises
+  const categories = Array.from(new Set(exercises.map((ex) => ex.category)));
+  const filteredExercises = exercises.filter((ex) => ex.category === selectedCategory);
 
-        const logsRef = collection(db, 'users', user.uid, 'exercises', exerciseId, 'logs');
-        const logsQuery = query(
-          logsRef,
-          where('timestamp', '>=', startOfDay),
-          where('timestamp', '<=', endOfDay),
-          orderBy('timestamp', 'asc')
-        );
+  // 3. Once the user selects an exercise, fetch the last 5 distinct days of logs
+  useEffect(() => {
+    if (!user || !selectedExerciseId) {
+      setDayLogs([]);
+      return;
+    }
+    // reference to logs subcollection for chosen exercise
+    const logsRef = collection(db, 'users', user.uid, 'exercises', selectedExerciseId, 'logs');
+    // order by timestamp descending, limit e.g. 50
+    const logsQuery = query(logsRef, orderBy('timestamp', 'desc'), limit(50));
 
-        onSnapshot(logsQuery, (logsSnapshot) => {
-          const dayLogs: LogEntry[] = [];
-          logsSnapshot.forEach((logDoc) => {
-            const data = logDoc.data();
-            dayLogs.push({
-              id: logDoc.id,
-              timestamp: data.timestamp.toDate(),
-              values: data.values,
-              exerciseId: exerciseId,
-              exerciseName: exerciseName, // attach name here
-            });
-          });
-          setLogs((prev) => [...prev, ...dayLogs]);
+    const unsubscribe = onSnapshot(logsQuery, (snapshot) => {
+      // parse logs in descending order
+      const allLogs: LogData[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        allLogs.push({
+          id: docSnap.id,
+          timestamp: data.timestamp.toDate(),
+          values: data.values,
         });
       });
+
+      // group logs by day, stopping after 5 distinct days
+      const grouped = groupLogsByDay(allLogs);
+      setDayLogs(grouped);
     });
+
+    return () => unsubscribe();
+  }, [user, selectedExerciseId]);
+
+  // Helper: group logs by day, stopping after 5 distinct days
+  const groupLogsByDay = (logs: LogData[]): DayLogs[] => {
+    const dayMap: { [dayString: string]: LogData[] } = {};
+    const results: DayLogs[] = [];
+    let distinctDaysCount = 0;
+
+    for (const log of logs) {
+      const dayString = formatDayString(log.timestamp);
+      if (!dayMap[dayString]) {
+        dayMap[dayString] = [];
+      }
+      dayMap[dayString].push(log);
+    }
+
+    // logs are in descending order by timestamp, so dayMap is not sorted
+    // we need to iterate logs again or sort the keys. We'll do it by
+    // re-constructing from the original order.
+    for (const log of logs) {
+      const dayString = formatDayString(log.timestamp);
+      // if we haven't added dayString yet, create a new DayLogs
+      const existing = results.find((dl) => dl.dayString === dayString);
+      if (!existing) {
+        if (results.length >= 5) break; // we already have 5 distinct days
+        results.push({ dayString, logs: [] });
+      }
+      // push the log into that day's array
+      const dayLogsEntry = results.find((dl) => dl.dayString === dayString);
+      dayLogsEntry?.logs.push(log);
+    }
+
+    return results;
   };
 
-  // Basic date formatting
-  const formatTimestamp = (date: Date) => {
-    return date.toLocaleString(); // or use date-fns for advanced formatting
+  // format the day (e.g. "2025-02-12")
+  const formatDayString = (date: Date) => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Workout Progress</Text>
 
-      <TouchableOpacity style={styles.dateButton} onPress={() => setShowPicker(true)}>
-        <Text style={styles.dateText}>{selectedDate.toDateString()}</Text>
-      </TouchableOpacity>
+      {/*  Category Picker */}
+      <Text style={styles.label}>Category</Text>
+      <View style={styles.pickerWrapper}>
+        <Picker
+          style={styles.picker}
+          dropdownIconColor="#FF6A00"
+          selectedValue={selectedCategory}
+          onValueChange={(val) => {
+            setSelectedCategory(val);
+            setSelectedExerciseId('');
+          }}
+        >
+          <Picker.Item label="-- Choose a Category --" value="" />
+          {categories.map((cat) => (
+            <Picker.Item key={cat} label={cat} value={cat} />
+          ))}
+        </Picker>
+      </View>
 
-      {showPicker && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={handleDateChange}
-        />
+      {/* Exercise Picker */}
+      {selectedCategory !== '' && (
+        <>
+          <Text style={styles.label}>Exercise</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              style={styles.picker}
+              dropdownIconColor="#FF6A00"
+              selectedValue={selectedExerciseId}
+              onValueChange={(val) => setSelectedExerciseId(val)}
+            >
+              <Picker.Item label="-- Choose an Exercise --" value="" />
+              {filteredExercises.map((ex) => (
+                <Picker.Item key={ex.id} label={ex.exerciseName} value={ex.id} />
+              ))}
+            </Picker>
+          </View>
+        </>
       )}
 
-      <View style={{ marginVertical: 8 }}>
-        <Button title="Fetch Logs" onPress={fetchLogsForDay} color="#FF6A00" />
-      </View>
+      {/* Show last 5 days of logs in a scrollable table */}
+      <Text style={[styles.label, { marginTop: 16 }]}>
+        Last 5 days with logs for selected exercise:
+      </Text>
 
-      <Text style={styles.subtitle}>Logs for {selectedDate.toDateString()}</Text>
+      <ScrollView style={styles.tableContainer}>
+        {dayLogs.length > 0 && (
+          <View style={styles.tableHeader}>
+            <Text style={[styles.cell, styles.headerCellTimeStamp]}>
+              Timestamp
+            </Text>
 
-      {/* Tabular Display */}
-      <View style={styles.tableHeader}>
-        <Text style={[styles.tableHeaderText, { flex: 2 }]}>Exercise</Text>
-        <Text style={[styles.tableHeaderText, { flex: 2 }]}>Timestamp</Text>
-        <Text style={[styles.tableHeaderText, { flex: 3 }]}>Fields</Text>
-      </View>
+            {Object.keys(dayLogs[0].logs[0]?.values || {}).map((key) => (
+              <Text key={key} style={[styles.cell, styles.headerCell]}>
+                {key}
+              </Text>
+            ))}
+          </View>
+        )}
 
-      <FlatList
-        data={logs}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => {
-          return (
-            <TableRow
-              exerciseName={item.exerciseName || 'N/A'}
-              timestamp={formatTimestamp(item.timestamp)}
-              values={item.values}
-            />
-          );
-        }}
-      />
+        {dayLogs.map((dayLog) => (
+          dayLog.logs.map((log) => (
+            <View key={log.id} style={styles.row}>
+              <Text style={[styles.cell, styles.headerCellTimeStamp, {color: '#FFF'}]}>
+                {log.timestamp.toLocaleString()}
+              </Text>
+
+              {Object.keys(log.values).map((key) => (
+                <Text key={key} style={[styles.cell, styles.headerCell, {color: '#FFF'}]}>{log.values[key]}</Text>
+              ))}
+            </View>
+          ))
+        ))}
+      </ScrollView>
     </View>
   );
 }
@@ -132,35 +221,67 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FFF',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  dateButton: {
-    backgroundColor: '#FF6A00',
-    padding: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginVertical: 8,
-  },
-  dateText: {
+  label: {
+    fontSize: 14,
     color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginTop: 10,
+    marginTop: 8,
     marginBottom: 4,
+  },
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: '#FF6A00',
+    borderRadius: 6,
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  picker: {
     color: '#FFF',
+    backgroundColor: '#1A1A1A',
+  },
+  tableContainer: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#FF6A00',
+    borderRadius: 6,
+    padding: 8,
+  },
+  daySection: {
+    marginBottom: 16,
+  },
+  dayHeader: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   tableHeader: {
     flexDirection: 'row',
-    borderBottomWidth: 2,
-    borderBottomColor: '#FF6A00',
-    paddingBottom: 6,
-    marginBottom: 6,
+    borderBottomWidth: 1,
+    borderColor: '#FF6A00',
+    paddingBottom: 4,
+    marginBottom: 4,
   },
-  tableHeaderText: {
-    color: '#FFF',
+  headerCellTimeStamp: {
+    flex: 3,
     fontWeight: 'bold',
+    color: '#FF6A00',
+    textAlign: 'left',
+  },
+  headerCell: {
+    flex: 2,
+    fontWeight: 'bold',
+    color: '#FF6A00',
+    textAlign: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderColor: '#333',
+  },
+  cell: {
+    color: '#FFF',
   },
 });

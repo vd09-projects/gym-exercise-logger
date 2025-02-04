@@ -42,7 +42,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    // paddingVertical: 50,
   },
   headerText: {
     color: '#FF6A00',
