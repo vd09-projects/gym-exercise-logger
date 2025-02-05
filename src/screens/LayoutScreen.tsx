@@ -6,14 +6,18 @@ import Footer from '../components/Footer';
 import ExerciseLogScreen from './ExerciseLogScreen';
 import ExerciseSetupScreen from './ExerciseSetupScreen';
 import ProgressScreen from './ProgressScreen';
+import HomeScreen from './HomeScreen';
 
 export default function LayoutScreen() {
   // This state controls which tab is active: "logger" | "setup" | "progress"
-  const [activeTab, setActiveTab] = useState<'logger' | 'setup' | 'progress'>('logger');
+  const [activeTab, setActiveTab] = useState<'Home' | 'logger' | 'setup' | 'progress'>('logger');
 
   // Decide which middle content to render
   let content;
   switch (activeTab) {
+    case 'Home':
+      content = <HomeScreen />;
+      break;
     case 'setup':
       content = <ExerciseSetupScreen />;
       break;
@@ -28,7 +32,9 @@ export default function LayoutScreen() {
   return (
     <View style={styles.container}>
       {/* Fixed Header */}
-      <Header />
+      <Header
+        onPressTab={(tab) => setActiveTab(tab)}
+      />
 
       {/* Middle content, based on active tab */}
       <View style={styles.content}>
@@ -46,11 +52,11 @@ export default function LayoutScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, 
+    flex: 1,
     backgroundColor: '#121212',
   },
   content: {
-    flex: 1, 
+    flex: 1,
     // The middle area
     padding: 16,
   },

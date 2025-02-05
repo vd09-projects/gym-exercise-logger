@@ -3,8 +3,8 @@ import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 
 interface FooterProps {
-  activeTab: 'logger' | 'setup' | 'progress';
-  onChangeTab: (tab: 'logger' | 'setup' | 'progress') => void;
+  activeTab: 'Home' | 'logger' | 'setup' | 'progress';
+  onChangeTab: (tab: 'Home' | 'logger' | 'setup' | 'progress') => void;
 }
 
 export default function Footer({ activeTab, onChangeTab }: FooterProps) {

@@ -6,7 +6,11 @@ import { useAuthUser } from '../hooks/useAuthUser';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 
-export default function Header() {
+interface HeaderProps {
+  onPressTab: (tab: 'Home' | 'logger' | 'setup' | 'progress') => void;
+}
+
+export default function Header({ onPressTab }: HeaderProps) {
   const { user } = useAuthUser();
 
   const handleLogout = async () => {
@@ -19,7 +23,10 @@ export default function Header() {
 
   return (
     <View style={styles.headerContainer}>
-      <TouchableOpacity>
+      <TouchableOpacity 
+
+style={[styles.tabButton]}
+      onPress={() => onPressTab('Home')}>
         <Text style={styles.headerText}>Home</Text>
       </TouchableOpacity>
 
@@ -53,5 +60,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     marginTop: 40,
+  },
+  tabButton: {
+    padding: 10,
   },
 });
