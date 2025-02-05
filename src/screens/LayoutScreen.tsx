@@ -10,13 +10,13 @@ import HomeScreen from './HomeScreen';
 
 export default function LayoutScreen() {
   // This state controls which tab is active: "logger" | "setup" | "progress"
-  const [activeTab, setActiveTab] = useState<'Home' | 'logger' | 'setup' | 'progress'>('logger');
+  const [activeTab, setActiveTab] = useState<'Home' | 'logger' | 'setup' | 'progress'>('Home');
 
   // Decide which middle content to render
   let content;
   switch (activeTab) {
-    case 'Home':
-      content = <HomeScreen />;
+    case 'logger':
+      content = <ExerciseLogScreen />;
       break;
     case 'setup':
       content = <ExerciseSetupScreen />;
@@ -25,7 +25,7 @@ export default function LayoutScreen() {
       content = <ProgressScreen />;
       break;
     default:
-      content = <ExerciseLogScreen />;
+      content = <HomeScreen />;
       break;
   }
 

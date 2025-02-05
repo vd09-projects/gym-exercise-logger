@@ -16,7 +16,7 @@ export default function HomeScreen() {
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 1200, // Smooth fade-in animation
+      duration: 800, // Smooth fade-in animation
       useNativeDriver: true,
     }).start();
   }, []);
