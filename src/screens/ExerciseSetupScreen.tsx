@@ -12,8 +12,9 @@ import { Ionicons } from '@expo/vector-icons';
 import ScrollableScreen from '../components/ScrollableScreen';
 
 type Field = {
-  label: string;
+  label?: string;
   type: string;
+  placeholder?: string;
 };
 
 interface ExerciseSetupProps { }
@@ -44,7 +45,7 @@ const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
   };
 
   const handleAddCustomField = () => {
-    setFields((prev) => [...prev, { label: 'Custom Field', type: 'text' }]);
+    setFields((prev) => [...prev, { placeholder: 'Custom Field', type: 'text' }]);
   };
 
   const handleSaveExercise = async () => {
@@ -78,7 +79,7 @@ const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
       <View style={styles.container}>
         <Text style={styles.heading}>Add a New Exercise</Text>
 
-        <Text style={styles.label}>Category</Text>
+        <Text style={styles.label}>Muscles Group</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g., Chest"
@@ -113,7 +114,9 @@ const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
           <View key={index} style={styles.fieldContainer}>
             <TextInput
               style={styles.fieldInput}
-              value={field.label}
+              value={field.label || ""}
+              placeholder={field.placeholder || "Enter label"}
+              placeholderTextColor="#888"
               onChangeText={(text) => handleRenameField(index, text)}
             />
             <TouchableOpacity onPress={() => handleRemoveField(index)}>

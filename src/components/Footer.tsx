@@ -1,18 +1,19 @@
 // src/components/Footer.tsx
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface FooterProps {
-  activeTab: 'Home' | 'logger' | 'setup' | 'progress';
-  onChangeTab: (tab: 'Home' | 'logger' | 'setup' | 'progress') => void;
+  activeTab: 'Home' | 'record' | 'configure' | 'insights';
+  onChangeTab: (tab: 'Home' | 'record' | 'configure' | 'insights') => void;
 }
 
 export default function Footer({ activeTab, onChangeTab }: FooterProps) {
   const tabs = [
-    { key: 'logger', label: 'Logger' },
-    { key: 'setup', label: 'Setup' },
-    { key: 'progress', label: 'Progress' },
-  ];
+    { key: 'record' as const, label: 'Record', icon: 'create-outline' as const },
+    { key: 'configure' as const, label: 'Setup', icon: 'settings-outline' as const },
+    { key: 'insights' as const, label: 'Progress', icon: 'bar-chart-outline' as const },
+  ]; 
 
   return (
     <View style={styles.footerContainer}>
@@ -22,8 +23,14 @@ export default function Footer({ activeTab, onChangeTab }: FooterProps) {
           <TouchableOpacity
             key={tab.key}
             style={[styles.tabButton, isActive && styles.activeTab]}
-            onPress={() => onChangeTab(tab.key as any)}
+            onPress={() => onChangeTab(tab.key)}
           >
+            <Ionicons
+              name={tab.icon}
+              size={22}
+              color={isActive ? '#FF6A00' : '#FFF'}
+              style={{ marginBottom: 2 }}
+            />
             <Text style={[styles.tabText, isActive && styles.activeText]}>
               {tab.label}
             </Text>
@@ -44,10 +51,13 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tabText: {
     color: '#FFF',
-    fontSize: 14,
+    fontSize: 12,
+    marginTop: 2,
   },
   activeTab: {
     borderBottomWidth: 2,

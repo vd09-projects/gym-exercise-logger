@@ -1,13 +1,9 @@
-// src/screens/ProgressScreen.tsx
-
 import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
@@ -40,7 +36,7 @@ export default function ProgressScreen() {
   const [selectedExerciseId, setSelectedExerciseId] = useState('');
   const [dayLogs, setDayLogs] = useState<DayLogs[]>([]); // array of grouped logs
 
-  // 1. Fetch all exercises for this user, store them in state
+  // 1. Fetch all exercises for this user
   useEffect(() => {
     if (!user) return;
     const exercisesRef = collection(db, 'users', user.uid, 'exercises');
@@ -58,19 +54,16 @@ export default function ProgressScreen() {
   const categories = Array.from(new Set(exercises.map((ex) => ex.category)));
   const filteredExercises = exercises.filter((ex) => ex.category === selectedCategory);
 
-  // 3. Once the user selects an exercise, fetch the last 5 distinct days of logs
+  // 3. Fetch last 5 distinct days for the chosen exercise
   useEffect(() => {
     if (!user || !selectedExerciseId) {
       setDayLogs([]);
       return;
     }
-    // reference to logs subcollection for chosen exercise
     const logsRef = collection(db, 'users', user.uid, 'exercises', selectedExerciseId, 'logs');
-    // order by timestamp descending, limit e.g. 50
     const logsQuery = query(logsRef, orderBy('timestamp', 'desc'), limit(50));
 
     const unsubscribe = onSnapshot(logsQuery, (snapshot) => {
-      // parse logs in descending order
       const allLogs: LogData[] = [];
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
@@ -89,12 +82,12 @@ export default function ProgressScreen() {
     return () => unsubscribe();
   }, [user, selectedExerciseId]);
 
-  // Helper: group logs by day, stopping after 5 distinct days
+  // Group logs by day, up to 5 distinct days
   const groupLogsByDay = (logs: LogData[]): DayLogs[] => {
-    const dayMap: { [dayString: string]: LogData[] } = {};
     const results: DayLogs[] = [];
-    let distinctDaysCount = 0;
+    const dayMap: Record<string, LogData[]> = {};
 
+    // Collect logs by dayString
     for (const log of logs) {
       const dayString = formatDayString(log.timestamp);
       if (!dayMap[dayString]) {
@@ -103,18 +96,13 @@ export default function ProgressScreen() {
       dayMap[dayString].push(log);
     }
 
-    // logs are in descending order by timestamp, so dayMap is not sorted
-    // we need to iterate logs again or sort the keys. We'll do it by
-    // re-constructing from the original order.
+    // Reconstruct in the original order (descending by timestamp)
     for (const log of logs) {
       const dayString = formatDayString(log.timestamp);
-      // if we haven't added dayString yet, create a new DayLogs
-      const existing = results.find((dl) => dl.dayString === dayString);
-      if (!existing) {
-        if (results.length >= 5) break; // we already have 5 distinct days
+      if (!results.find((dl) => dl.dayString === dayString)) {
+        if (results.length >= 5) break; // limit to 5 days
         results.push({ dayString, logs: [] });
       }
-      // push the log into that day's array
       const dayLogsEntry = results.find((dl) => dl.dayString === dayString);
       dayLogsEntry?.logs.push(log);
     }
@@ -122,7 +110,6 @@ export default function ProgressScreen() {
     return results;
   };
 
-  // format the day (e.g. "2025-02-12")
   const formatDayString = (date: Date) => {
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -130,12 +117,37 @@ export default function ProgressScreen() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
+  // Render table rows
+  const renderRows = () => {
+    return dayLogs.map((dayLog) =>
+      dayLog.logs.map((log) => (
+        <View key={log.id} style={styles.row}>
+          <Text style={[styles.cell, styles.timestampCell]}>
+            {log.timestamp.toLocaleString()}
+          </Text>
+          {Object.keys(log.values).map((key) => (
+            <Text key={key} style={[styles.cell, styles.dataCell]}>
+              {log.values[key]}
+            </Text>
+          ))}
+        </View>
+      ))
+    );
+  };
+
+  // Identify the keys we need for table columns
+  // We'll grab from the first log in dayLogs[0], if it exists
+  const columnKeys =
+    dayLogs.length > 0 && dayLogs[0].logs.length > 0
+      ? Object.keys(dayLogs[0].logs[0].values)
+      : [];
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Workout Progress</Text>
 
-      {/*  Category Picker */}
-      <Text style={styles.label}>Category</Text>
+      {/* Category Picker */}
+      <Text style={styles.label}>Muscles Group</Text>
       <View style={styles.pickerWrapper}>
         <Picker
           style={styles.picker}
@@ -146,7 +158,7 @@ export default function ProgressScreen() {
             setSelectedExerciseId('');
           }}
         >
-          <Picker.Item label="-- Choose a Category --" value="" />
+          <Picker.Item label="-- Choose a Muscles Group --" value="" />
           {categories.map((cat) => (
             <Picker.Item key={cat} label={cat} value={cat} />
           ))}
@@ -173,39 +185,32 @@ export default function ProgressScreen() {
         </>
       )}
 
-      {/* Show last 5 days of logs in a scrollable table */}
       <Text style={[styles.label, { marginTop: 16 }]}>
-        Last 5 days with logs for selected exercise:
+        Last 5 days with logs for the selected exercise:
       </Text>
 
-      <ScrollView style={styles.tableContainer}>
-        {dayLogs.length > 0 && (
+      {/* Table Header (fixed) */}
+      {columnKeys.length > 0 && (
+        <View style={styles.headerContainer}>
           <View style={styles.tableHeader}>
-            <Text style={[styles.cell, styles.headerCellTimeStamp]}>
+            <Text style={[styles.cell, styles.headerCell, styles.timestampCell]}>
               Timestamp
             </Text>
-
-            {Object.keys(dayLogs[0].logs[0]?.values || {}).map((key) => (
-              <Text key={key} style={[styles.cell, styles.headerCell]}>
+            {columnKeys.map((key) => (
+              <Text
+                key={key}
+                style={[styles.cell, styles.headerCell, styles.dataCell]}
+              >
                 {key}
               </Text>
             ))}
           </View>
-        )}
+        </View>
+      )}
 
-        {dayLogs.map((dayLog) => (
-          dayLog.logs.map((log) => (
-            <View key={log.id} style={styles.row}>
-              <Text style={[styles.cell, styles.headerCellTimeStamp, {color: '#FFF'}]}>
-                {log.timestamp.toLocaleString()}
-              </Text>
-
-              {Object.keys(log.values).map((key) => (
-                <Text key={key} style={[styles.cell, styles.headerCell, {color: '#FFF'}]}>{log.values[key]}</Text>
-              ))}
-            </View>
-          ))
-        ))}
+      {/* Scrollable Rows */}
+      <ScrollView style={styles.scrollArea}>
+        {renderRows()}
       </ScrollView>
     </View>
   );
@@ -240,40 +245,38 @@ const styles = StyleSheet.create({
     color: '#FFF',
     backgroundColor: '#1A1A1A',
   },
-  tableContainer: {
+
+  // Table-specific
+  headerContainer: {
     marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#FF6A00',
-    borderRadius: 6,
-    padding: 8,
-  },
-  daySection: {
-    marginBottom: 16,
-  },
-  dayHeader: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
+    // marginBottom optional if you want spacing
   },
   tableHeader: {
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderColor: '#FF6A00',
     paddingBottom: 4,
-    marginBottom: 4,
   },
-  headerCellTimeStamp: {
-    flex: 3,
-    fontWeight: 'bold',
-    color: '#FF6A00',
-    textAlign: 'left',
+  scrollArea: {
+    // scrollable area for rows
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#FF6A00',
+    borderRadius: 6,
+    marginTop: 4,
+    padding: 8,
   },
   headerCell: {
-    flex: 2,
     fontWeight: 'bold',
     color: '#FF6A00',
     textAlign: 'center',
+  },
+  timestampCell: {
+    flex: 3,
+    textAlign: 'left',
+  },
+  dataCell: {
+    flex: 2,
   },
   row: {
     flexDirection: 'row',
@@ -283,5 +286,6 @@ const styles = StyleSheet.create({
   },
   cell: {
     color: '#FFF',
+    textAlign: 'center',
   },
 });

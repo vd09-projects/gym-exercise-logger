@@ -1,13 +1,12 @@
 // src/components/Header.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-// If you need the user or signOut, import them from hooks & Firebase
 import { useAuthUser } from '../hooks/useAuthUser';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 
 interface HeaderProps {
-  onPressTab: (tab: 'Home' | 'logger' | 'setup' | 'progress') => void;
+  onPressTab: (tab: 'Home' | 'record' | 'configure' | 'insights') => void;
 }
 
 export default function Header({ onPressTab }: HeaderProps) {
@@ -23,16 +22,9 @@ export default function Header({ onPressTab }: HeaderProps) {
 
   return (
     <View style={styles.headerContainer}>
-      <TouchableOpacity 
-
-style={[styles.tabButton]}
-      onPress={() => onPressTab('Home')}>
+      <TouchableOpacity style={[styles.tabButton]} onPress={() => onPressTab('Home')}>
         <Text style={styles.headerText}>Home</Text>
       </TouchableOpacity>
-
-      {/* <Text style={styles.headerTitle}>
-        {user ? `Welcome, ${user.email}` : 'Gym Logger'}
-      </Text> */}
 
       <TouchableOpacity onPress={handleLogout}>
         <Text style={styles.headerText}>Logout</Text>
@@ -53,11 +45,6 @@ const styles = StyleSheet.create({
   headerText: {
     color: '#FF6A00',
     fontWeight: 'bold',
-    fontSize: 16,
-    marginTop: 40,
-  },
-  headerTitle: {
-    color: '#FFFFFF',
     fontSize: 16,
     marginTop: 40,
   },

@@ -88,7 +88,7 @@ export default function ExerciseLogScreen() {
             setSelectedExerciseId('');
           }}
         >
-          <Picker.Item label="-- Choose a Category --" value="" />
+          <Picker.Item label="-- Choose a Muscles Group --" value="" />
           {categories.map((cat) => (
             <Picker.Item key={cat} label={cat} value={cat} />
           ))}

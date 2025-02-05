@@ -1,27 +1,40 @@
 // src/screens/LayoutScreen.tsx
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Keyboard } from 'react-native';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ExerciseLogScreen from './ExerciseLogScreen';
 import ExerciseSetupScreen from './ExerciseSetupScreen';
 import ProgressScreen from './ProgressScreen';
 import HomeScreen from './HomeScreen';
+import AnimatedScreen from '../components/AnimatedText';
 
 export default function LayoutScreen() {
-  // This state controls which tab is active: "logger" | "setup" | "progress"
-  const [activeTab, setActiveTab] = useState<'Home' | 'logger' | 'setup' | 'progress'>('Home');
+  // Map old names to new keys: "Home" | "record" | "configure" | "insights"
+  const [activeTab, setActiveTab] = useState<'Home' | 'record' | 'configure' | 'insights'>('Home');
+
+  // State to track if keyboard is open
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setIsKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setIsKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Decide which middle content to render
   let content;
   switch (activeTab) {
-    case 'logger':
+    case 'record':
       content = <ExerciseLogScreen />;
       break;
-    case 'setup':
+    case 'configure':
       content = <ExerciseSetupScreen />;
       break;
-    case 'progress':
+    case 'insights':
       content = <ProgressScreen />;
       break;
     default:
@@ -31,21 +44,22 @@ export default function LayoutScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Fixed Header */}
-      <Header
-        onPressTab={(tab) => setActiveTab(tab)}
-      />
+      <Header onPressTab={(tab) => setActiveTab(tab as any)} />
 
-      {/* Middle content, based on active tab */}
+      {/* 🔥 Force remounting AnimatedScreen using `key={activeTab}` */}
       <View style={styles.content}>
-        {content}
+        <AnimatedScreen key={activeTab} animationType="fade">
+          {content}
+        </AnimatedScreen>
       </View>
 
-      {/* Fixed Footer with 3 buttons */}
-      <Footer
-        activeTab={activeTab}
-        onChangeTab={(tab) => setActiveTab(tab)}
-      />
+      {/* Hide the footer if keyboard is open */}
+      {!isKeyboardVisible && (
+        <Footer
+          activeTab={activeTab}
+          onChangeTab={(tab) => setActiveTab(tab)}
+        />
+      )}
     </View>
   );
 }

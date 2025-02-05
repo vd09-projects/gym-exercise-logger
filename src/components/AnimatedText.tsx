@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 
 interface AnimatedScreenProps {
@@ -7,26 +7,18 @@ interface AnimatedScreenProps {
 }
 
 const AnimatedScreen: React.FC<AnimatedScreenProps> = ({ children, animationType = 'fade' }) => {
-  const animatedValue = useState(new Animated.Value(0))[0];
+  const animatedValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    let animation;
-    if (animationType === 'slide') {
-      animation = Animated.timing(animatedValue, {
-        toValue: 1,
-        duration: 1200,
-        useNativeDriver: true,
-      });
-    } else {
-      animation = Animated.timing(animatedValue, {
-        toValue: 1,
-        duration: 1200,
-        useNativeDriver: true,
-      });
-    }
+    // Reset animated value before starting a new animation
+    animatedValue.setValue(0);
 
-    animation.start();
-  }, [animatedValue, animationType]);
+    Animated.timing(animatedValue, {
+      toValue: 1,
+      duration: 500, // Reduced duration for a smoother transition
+      useNativeDriver: true,
+    }).start();
+  }, [animatedValue]); // Ensure animation restarts when component remounts
 
   return (
     <Animated.View
@@ -38,7 +30,7 @@ const AnimatedScreen: React.FC<AnimatedScreenProps> = ({ children, animationType
         },
       ]}
     >
-      <View style={styles.innerContainer}>{children}</View> {/* Ensure children are inside a View */}
+      <View style={styles.innerContainer}>{children}</View>
     </Animated.View>
   );
 };
