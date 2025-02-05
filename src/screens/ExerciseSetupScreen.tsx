@@ -2,19 +2,21 @@
 
 import React, { FC, useState } from 'react';
 import {
-  View, Text, TextInput, Button, Alert, StyleSheet, Modal, TouchableOpacity
+  View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity
 } from 'react-native';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuthUser } from '../hooks/useAuthUser';
 import TemplateModal from '../components/TemplateModal';
+import { Ionicons } from '@expo/vector-icons';
+import ScrollableScreen from '../components/ScrollableScreen';
 
 type Field = {
   label: string;
-  type: string; // 'number' | 'text' etc.
+  type: string;
 };
 
-interface ExerciseSetupProps {}
+interface ExerciseSetupProps { }
 
 const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
   const { user } = useAuthUser();
@@ -29,9 +31,20 @@ const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
     setModalVisible(false);
   };
 
+  const handleRenameField = (index: number, newLabel: string) => {
+    setFields((prevFields) => {
+      const updatedFields = [...prevFields];
+      updatedFields[index] = { ...updatedFields[index], label: newLabel };
+      return updatedFields;
+    });
+  };
+
+  const handleRemoveField = (index: number) => {
+    setFields((prevFields) => prevFields.filter((_, i) => i !== index));
+  };
+
   const handleAddCustomField = () => {
-    const newField: Field = { label: 'Custom Field', type: 'text' };
-    setFields((prev) => [...prev, newField]);
+    setFields((prev) => [...prev, { label: 'Custom Field', type: 'text' }]);
   };
 
   const handleSaveExercise = async () => {
@@ -61,67 +74,58 @@ const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Add a New Exercise</Text>
+    <ScrollableScreen>
+      <View style={styles.container}>
+        <Text style={styles.heading}>Add a New Exercise</Text>
 
-      {/* Category Input */}
-      <Text style={styles.label}>Category</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g., Chest"
-        placeholderTextColor="#888"
-        value={category}
-        onChangeText={setCategory}
-      />
-
-      {/* Exercise Name Input */}
-      <Text style={styles.label}>Exercise Name</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g., Bench Press"
-        placeholderTextColor="#888"
-        value={exerciseName}
-        onChangeText={setExerciseName}
-      />
-
-      {/* CHOOSE STANDARD TEMPLATE Button */}
-      <View style={{ marginVertical: 8 }}>
-        <Button
-          title="Choose Standard Template"
-          onPress={() => setModalVisible(true)}
-          color="#FF6A00"
+        <Text style={styles.label}>Category</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g., Chest"
+          placeholderTextColor="#888"
+          value={category}
+          onChangeText={setCategory}
         />
-      </View>
 
-      {/* Add Custom Field */}
-      <View style={{ marginVertical: 8 }}>
-        <Button
-          title="Add Custom Field"
-          onPress={handleAddCustomField}
-          color="#FF6A00"
+        <Text style={styles.label}>Exercise Name</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g., Bench Press"
+          placeholderTextColor="#888"
+          value={exerciseName}
+          onChangeText={setExerciseName}
         />
-      </View>
 
-      {/* Current Fields */}
-      <Text style={styles.subHeading}>Current Fields:</Text>
-      {fields.map((field, index) => (
-        <Text key={index} style={styles.fieldListItem}>
-          {field.label} ({field.type})
-        </Text>
-      ))}
+        <View style={{ marginTop: 15 }}>
+          <Button
+            title="Choose Standard Template"
+            onPress={() => setModalVisible(true)}
+            color="#FF6A00"
+          />
+          <Button
+            title="Add Custom Field"
+            onPress={handleAddCustomField}
+            color="#FF6A00" />
+        </View>
 
-      {/* Save Exercise */}
-      <View style={{ marginTop: 16 }}>
+        <Text style={styles.subHeading}>Current Fields:</Text>
+        {fields.map((field, index) => (
+          <View key={index} style={styles.fieldContainer}>
+            <TextInput
+              style={styles.fieldInput}
+              value={field.label}
+              onChangeText={(text) => handleRenameField(index, text)}
+            />
+            <TouchableOpacity onPress={() => handleRemoveField(index)}>
+              <Ionicons name="trash" size={20} color="red" />
+            </TouchableOpacity>
+          </View>
+        ))}
+
         <Button title="Save Exercise" onPress={handleSaveExercise} color="#FF6A00" />
+        <TemplateModal visible={modalVisible} onClose={() => setModalVisible(false)} onSelectTemplate={handleSelectTemplate} />
       </View>
-
-      {/* Template Modal */}
-      <TemplateModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onSelectTemplate={handleSelectTemplate}
-      />
-    </View>
+    </ScrollableScreen>
   );
 };
 
@@ -143,6 +147,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFF',
     marginTop: 8,
+    marginBottom: 10,
   },
   input: {
     borderWidth: 1,
@@ -160,9 +165,21 @@ const styles = StyleSheet.create({
     color: '#FFF',
     marginBottom: 8,
   },
-  fieldListItem: {
-    fontSize: 14,
+  fieldContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1A1A1A',
+    padding: 8,
+    marginBottom: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FF6A00',
+  },
+  fieldInput: {
+    flex: 1,
     color: '#FFF',
-    marginBottom: 4,
+    fontSize: 14,
+    paddingHorizontal: 8,
   },
 });
