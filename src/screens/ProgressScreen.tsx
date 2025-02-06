@@ -9,6 +9,8 @@ import { Picker } from '@react-native-picker/picker';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuthUser } from '../hooks/useAuthUser';
+import { COLORS } from '../constants/theme';
+import { COLLECTIONS } from '../constants/firestore';
 
 interface Exercise {
   id: string;
@@ -39,7 +41,7 @@ export default function ProgressScreen() {
   // 1. Fetch all exercises for this user
   useEffect(() => {
     if (!user) return;
-    const exercisesRef = collection(db, 'users', user.uid, 'exercises');
+    const exercisesRef = collection(db, COLLECTIONS.USERS, user.uid, COLLECTIONS.EXERCISES);
     const unsubscribe = onSnapshot(exercisesRef, (snapshot) => {
       const data: Exercise[] = [];
       snapshot.forEach((docSnap) => {
@@ -60,7 +62,7 @@ export default function ProgressScreen() {
       setDayLogs([]);
       return;
     }
-    const logsRef = collection(db, 'users', user.uid, 'exercises', selectedExerciseId, 'logs');
+    const logsRef = collection(db, COLLECTIONS.USERS, user.uid, COLLECTIONS.EXERCISES, selectedExerciseId, COLLECTIONS.LOGS);
     const logsQuery = query(logsRef, orderBy('timestamp', 'desc'), limit(50));
 
     const unsubscribe = onSnapshot(logsQuery, (snapshot) => {
@@ -151,7 +153,7 @@ export default function ProgressScreen() {
       <View style={styles.pickerWrapper}>
         <Picker
           style={styles.picker}
-          dropdownIconColor="#FF6A00"
+          dropdownIconColor={COLORS.primary}
           selectedValue={selectedCategory}
           onValueChange={(val) => {
             setSelectedCategory(val);
@@ -172,7 +174,7 @@ export default function ProgressScreen() {
           <View style={styles.pickerWrapper}>
             <Picker
               style={styles.picker}
-              dropdownIconColor="#FF6A00"
+              dropdownIconColor={COLORS.primary}
               selectedValue={selectedExerciseId}
               onValueChange={(val) => setSelectedExerciseId(val)}
             >
@@ -219,31 +221,31 @@ export default function ProgressScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: COLORS.background,
     padding: 16,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: COLORS.textWhite,
     marginBottom: 12,
   },
   label: {
     fontSize: 14,
-    color: '#FFF',
+    color: COLORS.textWhite,
     marginTop: 8,
     marginBottom: 4,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#FF6A00',
+    borderColor: COLORS.primary,
     borderRadius: 6,
     marginBottom: 8,
     overflow: 'hidden',
   },
   picker: {
-    color: '#FFF',
-    backgroundColor: '#1A1A1A',
+    color: COLORS.textWhite,
+    backgroundColor: COLORS.backgroundDark,
   },
 
   // Table-specific
@@ -254,21 +256,21 @@ const styles = StyleSheet.create({
   tableHeader: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderColor: '#FF6A00',
+    borderColor: COLORS.primary,
     paddingBottom: 4,
   },
   scrollArea: {
     // scrollable area for rows
     flex: 1,
     borderWidth: 1,
-    borderColor: '#FF6A00',
+    borderColor: COLORS.primary,
     borderRadius: 6,
     marginTop: 4,
     padding: 8,
   },
   headerCell: {
     fontWeight: 'bold',
-    color: '#FF6A00',
+    color: COLORS.primary,
     textAlign: 'center',
   },
   timestampCell: {
@@ -282,10 +284,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 4,
     borderBottomWidth: 1,
-    borderColor: '#333',
+    borderColor: COLORS.dividerColor,
   },
   cell: {
-    color: '#FFF',
+    color: COLORS.textWhite,
     textAlign: 'center',
   },
 });

@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { useAuthUser } from '../hooks/useAuthUser';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '../constants/theme';
 
 export default function HomeScreen() {
   const { user } = useAuthUser();
@@ -17,7 +18,7 @@ export default function HomeScreen() {
       source={{ uri: 'https://source.unsplash.com/featured/?gym,fitness' }} // Dynamic gym-themed background
     >
       <View style={styles.content}>
-        <Ionicons name="barbell-outline" size={64} color="#FF6A00" />
+        <Ionicons name="barbell-outline" size={64} color={COLORS.primary} />
         <Text style={styles.greeting}>Hi</Text>
         <Text style={styles.nameGreeting}>{user?.email || 'Guest'}</Text>
         <Text style={styles.welcome}>Welcome to</Text>
@@ -43,27 +44,27 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FF6A00',
+    color: COLORS.primary,
     marginBottom: 10,
   },
   nameGreeting: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FF6A00',
+    color: COLORS.primary,
     marginBottom: 10,
   },
   welcome: {
     fontSize: 22,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: COLORS.textWhite,
     marginBottom: 5,
   },
   appName: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: COLORS.textWhite,
   },
   highlighted: {
-    color: '#FF6A00',
+    color: COLORS.primary,
   },
 });

@@ -5,6 +5,7 @@ import { Picker } from '@react-native-picker/picker';
 import { collection, onSnapshot, addDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '../services/firebase/firebaseConfig';
 import { useAuthUser } from '../hooks/useAuthUser';
+import { COLLECTIONS } from '../constants/firestore';
 
 interface Exercise {
   id: string;
@@ -27,7 +28,7 @@ export default function ExerciseLogScreen() {
   useEffect(() => {
     if (!user) return;
 
-    const exercisesRef = collection(db, 'users', user.uid, 'exercises');
+    const exercisesRef = collection(db, COLLECTIONS.USERS, user.uid, COLLECTIONS.EXERCISES);
     const unsubscribe = onSnapshot(exercisesRef, (snapshot) => {
       const data: Exercise[] = [];
       snapshot.forEach((docSnap) => {
@@ -58,8 +59,8 @@ export default function ExerciseLogScreen() {
     }
 
     try {
-      const exerciseDocRef = doc(db, 'users', user.uid, 'exercises', selectedExercise.id);
-      await addDoc(collection(exerciseDocRef, 'logs'), {
+      const exerciseDocRef = doc(db, COLLECTIONS.USERS, user.uid, COLLECTIONS.EXERCISES, selectedExercise.id);
+      await addDoc(collection(exerciseDocRef, COLLECTIONS.LOGS), {
         timestamp: Timestamp.now(),
         values: { ...fieldValues },
       });

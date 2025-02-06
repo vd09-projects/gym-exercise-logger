@@ -10,6 +10,7 @@ import { useAuthUser } from '../hooks/useAuthUser';
 import TemplateModal from '../components/TemplateModal';
 import { Ionicons } from '@expo/vector-icons';
 import ScrollableScreen from '../components/ScrollableScreen';
+import { COLORS } from '../constants/theme';
 
 type Field = {
   label?: string;
@@ -92,7 +93,7 @@ const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
         <TextInput
           style={styles.input}
           placeholder="e.g., Bench Press"
-          placeholderTextColor="#888"
+          placeholderTextColor={COLORS.placeholderTextColor}
           value={exerciseName}
           onChangeText={setExerciseName}
         />
@@ -101,12 +102,12 @@ const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
           <Button
             title="Choose Standard Template"
             onPress={() => setModalVisible(true)}
-            color="#FF6A00"
+            color={COLORS.primary}
           />
           <Button
             title="Add Custom Field"
             onPress={handleAddCustomField}
-            color="#FF6A00" />
+            color={COLORS.primary} />
         </View>
 
         <Text style={styles.subHeading}>Current Fields:</Text>
@@ -116,7 +117,7 @@ const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
               style={styles.fieldInput}
               value={field.label || ""}
               placeholder={field.placeholder || "Enter label"}
-              placeholderTextColor="#888"
+              placeholderTextColor={COLORS.placeholderTextColor}
               onChangeText={(text) => handleRenameField(index, text)}
             />
             <TouchableOpacity onPress={() => handleRemoveField(index)}>
@@ -125,7 +126,7 @@ const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
           </View>
         ))}
 
-        <Button title="Save Exercise" onPress={handleSaveExercise} color="#FF6A00" />
+        <Button title="Save Exercise" onPress={handleSaveExercise} color={COLORS.primary} />
         <TemplateModal visible={modalVisible} onClose={() => setModalVisible(false)} onSelectTemplate={handleSelectTemplate} />
       </View>
     </ScrollableScreen>
@@ -137,51 +138,51 @@ export default ExerciseSetupScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: COLORS.background,
     padding: 16,
   },
   heading: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: COLORS.textWhite,
     marginBottom: 12,
   },
   label: {
     fontSize: 14,
-    color: '#FFF',
+    color: COLORS.textWhite,
     marginTop: 8,
     marginBottom: 10,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#FF6A00',
+    borderColor: COLORS.primary,
     borderRadius: 6,
     padding: 8,
-    color: '#FFF',
-    backgroundColor: '#1A1A1A',
+    color: COLORS.textWhite,
+    backgroundColor: COLORS.backgroundDark,
     marginBottom: 8,
   },
   subHeading: {
     marginTop: 16,
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: COLORS.textWhite,
     marginBottom: 8,
   },
   fieldContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: COLORS.backgroundDark,
     padding: 8,
     marginBottom: 8,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#FF6A00',
+    borderColor: COLORS.primary,
   },
   fieldInput: {
     flex: 1,
-    color: '#FFF',
+    color: COLORS.textWhite,
     fontSize: 14,
     paddingHorizontal: 8,
   },

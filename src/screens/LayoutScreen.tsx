@@ -8,6 +8,7 @@ import ExerciseSetupScreen from './ExerciseSetupScreen';
 import ProgressScreen from './ProgressScreen';
 import HomeScreen from './HomeScreen';
 import AnimatedScreen from '../components/AnimatedText';
+import { COLORS } from '../constants/theme';
 
 export default function LayoutScreen() {
   // Map old names to new keys: "Home" | "record" | "configure" | "insights"
@@ -67,7 +68,7 @@ export default function LayoutScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: COLORS.background,
   },
   content: {
     flex: 1,

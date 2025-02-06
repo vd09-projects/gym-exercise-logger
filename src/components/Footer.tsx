@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SIZES } from '../constants/theme';
 
 interface FooterProps {
   activeTab: 'Home' | 'record' | 'configure' | 'insights';
@@ -13,7 +14,7 @@ export default function Footer({ activeTab, onChangeTab }: FooterProps) {
     { key: 'record' as const, label: 'Record', icon: 'create-outline' as const },
     { key: 'configure' as const, label: 'Setup', icon: 'settings-outline' as const },
     { key: 'insights' as const, label: 'Progress', icon: 'bar-chart-outline' as const },
-  ]; 
+  ];
 
   return (
     <View style={styles.footerContainer}>
@@ -28,7 +29,7 @@ export default function Footer({ activeTab, onChangeTab }: FooterProps) {
             <Ionicons
               name={tab.icon}
               size={22}
-              color={isActive ? '#FF6A00' : '#FFF'}
+              color={isActive ? COLORS.primary : COLORS.textWhite}
               style={{ marginBottom: 2 }}
             />
             <Text style={[styles.tabText, isActive && styles.activeText]}>
@@ -42,29 +43,29 @@ export default function Footer({ activeTab, onChangeTab }: FooterProps) {
 }
 
 const styles = StyleSheet.create({
-  footerContainer: {
-    height: 60,
-    backgroundColor: '#1A1A1A',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
   tabButton: {
     padding: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  footerContainer: {
+    height: 60,
+    backgroundColor: COLORS.footerBackground,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
   tabText: {
-    color: '#FFF',
-    fontSize: 12,
+    color: COLORS.textWhite,
+    fontSize: SIZES.fontSmall,
     marginTop: 2,
   },
   activeTab: {
     borderBottomWidth: 2,
-    borderBottomColor: '#FF6A00',
+    borderBottomColor: COLORS.primary,
   },
   activeText: {
-    color: '#FF6A00',
+    color: COLORS.primary,
     fontWeight: 'bold',
   },
 });

@@ -3,6 +3,7 @@ import React from 'react';
 import {
   Modal, View, Text, StyleSheet, TouchableOpacity
 } from 'react-native';
+import { COLORS } from '../constants/theme';
 
 type Field = { label: string; type: string };
 
@@ -60,26 +61,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: COLORS.backgroundDark,
     padding: 16,
     borderRadius: 8,
     width: '80%',
   },
   title: {
     fontSize: 20,
-    color: '#FFF',
+    color: COLORS.textWhite,
     fontWeight: 'bold',
     marginBottom: 12,
     textAlign: 'center',
   },
   templateButton: {
-    backgroundColor: '#FF6A00',
+    backgroundColor: COLORS.primary,
     padding: 10,
     borderRadius: 6,
     marginTop: 8,
   },
   templateText: {
-    color: '#FFF',
+    color: COLORS.textWhite,
     textAlign: 'center',
     fontWeight: '600',
   },
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   closeText: {
-    color: '#FFF',
+    color: COLORS.textWhite,
     fontSize: 16,
   },
 });

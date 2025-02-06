@@ -2,6 +2,7 @@
 
 import React, { ReactNode } from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
+import { COLORS } from '../constants/theme';
 
 interface ScrollableScreenProps {
   children: ReactNode;
@@ -24,7 +25,7 @@ export default ScrollableScreen;
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
-    backgroundColor: '#121212', // Consistent background
+    backgroundColor: COLORS.background, // Consistent background
   },
   contentContainer: {
     paddingBottom: 20, // Prevents elements from being cut off
