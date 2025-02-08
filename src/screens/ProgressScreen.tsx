@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuthUser } from '../hooks/useAuthUser';
@@ -38,7 +37,7 @@ export default function ProgressScreen() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedExerciseId, setSelectedExerciseId] = useState('');
-  const [dayLogs, setDayLogs] = useState<DayLogs[]>([]); // array of grouped logs
+  const [dayLogs, setDayLogs] = useState<DayLogs[]>([]);
 
   // 1. Fetch all exercises for this user
   useEffect(() => {
@@ -78,7 +77,6 @@ export default function ProgressScreen() {
         });
       });
 
-      // group logs by day, stopping after 5 distinct days
       const grouped = groupLogsByDay(allLogs);
       setDayLogs(grouped);
     });
@@ -91,7 +89,6 @@ export default function ProgressScreen() {
     const results: DayLogs[] = [];
     const dayMap: Record<string, LogData[]> = {};
 
-    // Collect logs by dayString
     for (const log of logs) {
       const dayString = formatDayString(log.timestamp);
       if (!dayMap[dayString]) {
@@ -100,11 +97,10 @@ export default function ProgressScreen() {
       dayMap[dayString].push(log);
     }
 
-    // Reconstruct in the original order (descending by timestamp)
     for (const log of logs) {
       const dayString = formatDayString(log.timestamp);
       if (!results.find((dl) => dl.dayString === dayString)) {
-        if (results.length >= 5) break; // limit to 5 days
+        if (results.length >= 5) break;
         results.push({ dayString, logs: [] });
       }
       const dayLogsEntry = results.find((dl) => dl.dayString === dayString);
@@ -121,7 +117,6 @@ export default function ProgressScreen() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  // Render table rows
   const renderRows = () => {
     return dayLogs.map((dayLog) =>
       dayLog.logs.map((log) => (
@@ -139,8 +134,6 @@ export default function ProgressScreen() {
     );
   };
 
-  // Identify the keys we need for table columns
-  // We'll grab from the first log in dayLogs[0], if it exists
   const columnKeys =
     dayLogs.length > 0 && dayLogs[0].logs.length > 0
       ? Object.keys(dayLogs[0].logs[0].values)
@@ -150,7 +143,6 @@ export default function ProgressScreen() {
     <View style={styles.container}>
       <Text style={STYLES.heading}>Workout Progress</Text>
 
-      {/* Category Picker */}
       <Text style={STYLES.title}>Workout</Text>
       <SearchableDropdown
         data={categories.map((cat) => ({ label: cat, value: cat }))}
@@ -162,7 +154,6 @@ export default function ProgressScreen() {
         }}
       />
 
-      {/* Exercise Picker */}
       {selectedCategory !== '' && (
         <>
           <Text style={STYLES.title}>Exercise</Text>
@@ -177,33 +168,32 @@ export default function ProgressScreen() {
         </>
       )}
 
-      <Text style={[styles.label, { marginTop: 16 }]}>
-        Last 5 days with logs for the selected exercise:
-      </Text>
+      {selectedExerciseId && (
+        <>
+          <Text style={[styles.label, { marginTop: 16 }]}>
+            Last 5 days with logs for the selected exercise:
+          </Text>
 
-      {/* Table Header (fixed) */}
-      {columnKeys.length > 0 && (
-        <View style={styles.headerContainer}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.cell, styles.headerCell, styles.timestampCell]}>
-              Timestamp
-            </Text>
-            {columnKeys.map((key) => (
-              <Text
-                key={key}
-                style={[styles.cell, styles.headerCell, styles.dataCell]}
-              >
-                {key}
-              </Text>
-            ))}
-          </View>
-        </View>
+          {columnKeys.length > 0 && (
+            <View style={styles.headerContainer}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.cell, styles.headerCell, styles.timestampCell]}>
+                  Timestamp
+                </Text>
+                {columnKeys.map((key) => (
+                  <Text key={key} style={[styles.cell, styles.headerCell, styles.dataCell]}>
+                    {key}
+                  </Text>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <ScrollView style={styles.scrollArea}>
+            {renderRows()}
+          </ScrollView>
+        </>
       )}
-
-      {/* Scrollable Rows */}
-      <ScrollView style={styles.scrollArea}>
-        {renderRows()}
-      </ScrollView>
     </View>
   );
 }
@@ -226,22 +216,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 4,
   },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    borderRadius: 6,
-    marginBottom: 8,
-    overflow: 'hidden',
-  },
-  picker: {
-    color: COLORS.textWhite,
-    backgroundColor: COLORS.backgroundDark,
-  },
-
-  // Table-specific
   headerContainer: {
     marginTop: 8,
-    // marginBottom optional if you want spacing
   },
   tableHeader: {
     flexDirection: 'row',
@@ -250,7 +226,6 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   scrollArea: {
-    // scrollable area for rows
     flex: 1,
     borderWidth: 1,
     borderColor: COLORS.primary,
