@@ -124,9 +124,9 @@ export default function ProgressScreen() {
           <Text style={[styles.cell, styles.timestampCell]}>
             {log.timestamp.toLocaleString()}
           </Text>
-          {Object.keys(log.values).map((key) => (
+          {columnKeys.map((key) => (
             <Text key={key} style={[styles.cell, styles.dataCell]}>
-              {log.values[key]}
+              {log.values[key] ?? 'N/A'}
             </Text>
           ))}
         </View>
@@ -134,10 +134,9 @@ export default function ProgressScreen() {
     );
   };
 
-  const columnKeys =
-    dayLogs.length > 0 && dayLogs[0].logs.length > 0
-      ? Object.keys(dayLogs[0].logs[0].values)
-      : [];
+  const columnKeys = Array.from(
+    new Set(dayLogs.flatMap((dayLog) => dayLog.logs.flatMap((log) => Object.keys(log.values))))
+  );
 
   return (
     <View style={styles.container}>
@@ -177,9 +176,7 @@ export default function ProgressScreen() {
           {columnKeys.length > 0 && (
             <View style={styles.headerContainer}>
               <View style={styles.tableHeader}>
-                <Text style={[styles.cell, styles.headerCell, styles.timestampCell]}>
-                  Timestamp
-                </Text>
+                <Text style={[styles.cell, styles.headerCell, styles.timestampCell]}>Timestamp</Text>
                 {columnKeys.map((key) => (
                   <Text key={key} style={[styles.cell, styles.headerCell, styles.dataCell]}>
                     {key}
@@ -221,8 +218,6 @@ const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: COLORS.primary,
     paddingBottom: 4,
   },
   scrollArea: {
