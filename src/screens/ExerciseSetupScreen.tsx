@@ -10,7 +10,7 @@ import { useAuthUser } from '../hooks/useAuthUser';
 import TemplateModal from '../components/TemplateModal';
 import { Ionicons } from '@expo/vector-icons';
 import ScrollableScreen from '../components/ScrollableScreen';
-import { COLORS } from '../constants/theme';
+import { COLORS, STYLES } from '../constants/theme';
 
 type Field = {
   label?: string;
@@ -78,9 +78,9 @@ const ExerciseSetupScreen: FC<ExerciseSetupProps> = () => {
   return (
     <ScrollableScreen>
       <View style={styles.container}>
-        <Text style={styles.heading}>Add a New Exercise</Text>
+        <Text style={STYLES.heading}>Add a New Exercise</Text>
 
-        <Text style={styles.label}>Muscles Group</Text>
+        <Text style={styles.label}>Workout</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g., Chest"
@@ -140,12 +140,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
     padding: 16,
-  },
-  heading: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.textWhite,
-    marginBottom: 12,
   },
   label: {
     fontSize: 14,

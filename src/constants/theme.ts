@@ -1,4 +1,5 @@
 // src/constants/theme.ts
+import { StyleSheet } from 'react-native';
 
 export const COLORS = {
     primary: '#FF6A00',
@@ -27,3 +28,16 @@ export const COLORS = {
     // bold: { fontFamily: 'System', fontWeight: '700' },
     // etc.
   };
+
+  export const STYLES = StyleSheet.create({
+    heading: {
+      fontSize: 26,
+      fontWeight: 'bold',
+      color: COLORS.textWhite,
+      marginBottom: 24,
+      textAlign: 'center',
+      borderBottomWidth: 3,
+      borderBottomColor: COLORS.primary,
+      paddingBottom: 4,
+    },
+  });

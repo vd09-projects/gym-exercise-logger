@@ -1,11 +1,12 @@
 // src/screens/ExerciseLogScreen.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { collection, onSnapshot, addDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '../services/firebase/firebaseConfig';
 import { useAuthUser } from '../hooks/useAuthUser';
 import { COLLECTIONS } from '../constants/firestore';
+import SearchableDropdown from '../components/SearchableDropdown';
+import { COLORS, STYLES } from '../constants/theme';
 
 interface Exercise {
   id: string;
@@ -40,7 +41,10 @@ export default function ExerciseLogScreen() {
     return () => unsubscribe();
   }, [user]);
 
+  // Get unique categories from the exercises.
   const categories = Array.from(new Set(exercises.map((ex) => ex.category)));
+
+  // Filter exercises based on the selected category.
   const filteredExercises = exercises.filter((ex) => ex.category === selectedCategory);
   const selectedExercise = exercises.find((ex) => ex.id === selectedExerciseId);
 
@@ -59,14 +63,19 @@ export default function ExerciseLogScreen() {
     }
 
     try {
-      const exerciseDocRef = doc(db, COLLECTIONS.USERS, user.uid, COLLECTIONS.EXERCISES, selectedExercise.id);
+      const exerciseDocRef = doc(
+        db,
+        COLLECTIONS.USERS,
+        user.uid,
+        COLLECTIONS.EXERCISES,
+        selectedExercise.id
+      );
       await addDoc(collection(exerciseDocRef, COLLECTIONS.LOGS), {
         timestamp: Timestamp.now(),
         values: { ...fieldValues },
       });
 
       Alert.alert('Success', 'Workout log saved!');
-
       setSelectedCategory('');
       setSelectedExerciseId('');
       setFieldValues({});
@@ -78,43 +87,31 @@ export default function ExerciseLogScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Select a Category</Text>
-      <View style={styles.pickerContainer}>
-        <Picker
-          style={styles.picker}
-          dropdownIconColor="#FF6A00"
-          selectedValue={selectedCategory}
-          onValueChange={(itemValue) => {
-            setSelectedCategory(itemValue);
-            setSelectedExerciseId('');
-          }}
-        >
-          <Picker.Item label="-- Choose a Muscles Group --" value="" />
-          {categories.map((cat) => (
-            <Picker.Item key={cat} label={cat} value={cat} />
-          ))}
-        </Picker>
-      </View>
+      <Text style={STYLES.heading}>Record Your Workout</Text>
+
+      <Text style={styles.title}>Select a Workout</Text>
+      <SearchableDropdown
+        data={categories.map((cat) => ({ label: cat, value: cat }))}
+        placeholder="Choose a workout"
+        value={selectedCategory}
+        onChange={(value) => {
+          setSelectedCategory(value);
+          setSelectedExerciseId('');
+        }}
+      />
 
       {selectedCategory !== '' && (
         <>
           <Text style={styles.title}>Select an Exercise</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              style={styles.picker}
-              dropdownIconColor="#FF6A00"
-              selectedValue={selectedExerciseId}
-              onValueChange={(itemValue) => {
-                setSelectedExerciseId(itemValue);
-                setFieldValues({}); // Clear fieldValues when a different exercise is selected
-              }}
-            >
-              <Picker.Item label="-- Choose an Exercise --" value="" />
-              {filteredExercises.map((ex) => (
-                <Picker.Item key={ex.id} label={ex.exerciseName} value={ex.id} />
-              ))}
-            </Picker>
-          </View>
+          <SearchableDropdown
+            data={filteredExercises.map((ex) => ({ label: ex.exerciseName, value: ex.id }))}
+            placeholder="Choose an exercise"
+            value={selectedExerciseId}
+            onChange={(value) => {
+              setSelectedExerciseId(value);
+              setFieldValues({});
+            }}
+          />
         </>
       )}
 
@@ -126,8 +123,7 @@ export default function ExerciseLogScreen() {
               <Text style={styles.fieldLabel}>{field.label}</Text>
               <TextInput
                 style={styles.fieldInput}
-                // keyboardType={field.type === 'number' ? 'decimal-pad' : 'default'}
-                keyboardType='default'
+                keyboardType="default"
                 placeholder={field.type === 'number' ? '0' : 'Enter value'}
                 placeholderTextColor="#888"
                 value={fieldValues[field.label] || ''}
@@ -155,17 +151,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 8,
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#FF6A00',
-    borderRadius: 6,
-    marginBottom: 16,
-    overflow: 'hidden',
-  },
-  picker: {
-    color: '#FFFFFF',
-    backgroundColor: '#1A1A1A',
   },
   fieldRow: {
     flexDirection: 'row',

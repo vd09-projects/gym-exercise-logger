@@ -9,7 +9,7 @@ import { Picker } from '@react-native-picker/picker';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuthUser } from '../hooks/useAuthUser';
-import { COLORS } from '../constants/theme';
+import { COLORS, STYLES } from '../constants/theme';
 import { COLLECTIONS } from '../constants/firestore';
 
 interface Exercise {
@@ -146,10 +146,10 @@ export default function ProgressScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Workout Progress</Text>
+      <Text style={STYLES.heading}>Workout Progress</Text>
 
       {/* Category Picker */}
-      <Text style={styles.label}>Muscles Group</Text>
+      <Text style={styles.label}>Workout</Text>
       <View style={styles.pickerWrapper}>
         <Picker
           style={styles.picker}
@@ -160,7 +160,7 @@ export default function ProgressScreen() {
             setSelectedExerciseId('');
           }}
         >
-          <Picker.Item label="-- Choose a Muscles Group --" value="" />
+          <Picker.Item label="-- Choose a Workout --" value="" />
           {categories.map((cat) => (
             <Picker.Item key={cat} label={cat} value={cat} />
           ))}
