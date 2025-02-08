@@ -7,6 +7,7 @@ import { useAuthUser } from '../hooks/useAuthUser';
 import { COLLECTIONS } from '../constants/firestore';
 import SearchableDropdown from '../components/SearchableDropdown';
 import { COLORS, STYLES } from '../constants/theme';
+import { DISPLAY_TITLE } from '../constants/DisplayText';
 
 interface Exercise {
   id: string;
@@ -89,10 +90,10 @@ export default function ExerciseLogScreen() {
     <View style={styles.container}>
       <Text style={STYLES.heading}>Record Your Workout</Text>
 
-      <Text style={styles.title}>Select a Workout</Text>
+      <Text style={STYLES.title}>Select a Workout</Text>
       <SearchableDropdown
         data={categories.map((cat) => ({ label: cat, value: cat }))}
-        placeholder="Choose a workout"
+        placeholder={DISPLAY_TITLE.Workout}
         value={selectedCategory}
         onChange={(value) => {
           setSelectedCategory(value);
@@ -102,10 +103,10 @@ export default function ExerciseLogScreen() {
 
       {selectedCategory !== '' && (
         <>
-          <Text style={styles.title}>Select an Exercise</Text>
+          <Text style={STYLES.title}>Select an Exercise</Text>
           <SearchableDropdown
             data={filteredExercises.map((ex) => ({ label: ex.exerciseName, value: ex.id }))}
-            placeholder="Choose an exercise"
+            placeholder={DISPLAY_TITLE.Exercise}
             value={selectedExerciseId}
             onChange={(value) => {
               setSelectedExerciseId(value);
@@ -117,7 +118,7 @@ export default function ExerciseLogScreen() {
 
       {selectedExercise && (
         <>
-          <Text style={styles.title}>Log Details for {selectedExercise.exerciseName}</Text>
+          <Text style={STYLES.title}>Log Details for {selectedExercise.exerciseName}</Text>
           {selectedExercise.fields.map((field) => (
             <View key={field.label} style={styles.fieldRow}>
               <Text style={styles.fieldLabel}>{field.label}</Text>
@@ -145,12 +146,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#121212',
     padding: 16,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
   },
   fieldRow: {
     flexDirection: 'row',

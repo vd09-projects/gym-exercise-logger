@@ -40,4 +40,10 @@ export const COLORS = {
       borderBottomColor: COLORS.primary,
       paddingBottom: 4,
     },
+    title: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#FFFFFF',
+      marginBottom: 8,
+    },
   });

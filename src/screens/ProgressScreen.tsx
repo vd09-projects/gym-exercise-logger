@@ -11,6 +11,8 @@ import { db } from '../services/firebase';
 import { useAuthUser } from '../hooks/useAuthUser';
 import { COLORS, STYLES } from '../constants/theme';
 import { COLLECTIONS } from '../constants/firestore';
+import SearchableDropdown from '../components/SearchableDropdown';
+import { DISPLAY_TITLE } from '../constants/DisplayText';
 
 interface Exercise {
   id: string;
@@ -149,41 +151,29 @@ export default function ProgressScreen() {
       <Text style={STYLES.heading}>Workout Progress</Text>
 
       {/* Category Picker */}
-      <Text style={styles.label}>Workout</Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-          style={styles.picker}
-          dropdownIconColor={COLORS.primary}
-          selectedValue={selectedCategory}
-          onValueChange={(val) => {
-            setSelectedCategory(val);
-            setSelectedExerciseId('');
-          }}
-        >
-          <Picker.Item label="-- Choose a Workout --" value="" />
-          {categories.map((cat) => (
-            <Picker.Item key={cat} label={cat} value={cat} />
-          ))}
-        </Picker>
-      </View>
+      <Text style={STYLES.title}>Workout</Text>
+      <SearchableDropdown
+        data={categories.map((cat) => ({ label: cat, value: cat }))}
+        placeholder={DISPLAY_TITLE.Workout}
+        value={selectedCategory}
+        onChange={(value) => {
+          setSelectedCategory(value);
+          setSelectedExerciseId('');
+        }}
+      />
 
       {/* Exercise Picker */}
       {selectedCategory !== '' && (
         <>
-          <Text style={styles.label}>Exercise</Text>
-          <View style={styles.pickerWrapper}>
-            <Picker
-              style={styles.picker}
-              dropdownIconColor={COLORS.primary}
-              selectedValue={selectedExerciseId}
-              onValueChange={(val) => setSelectedExerciseId(val)}
-            >
-              <Picker.Item label="-- Choose an Exercise --" value="" />
-              {filteredExercises.map((ex) => (
-                <Picker.Item key={ex.id} label={ex.exerciseName} value={ex.id} />
-              ))}
-            </Picker>
-          </View>
+          <Text style={STYLES.title}>Exercise</Text>
+          <SearchableDropdown
+            data={filteredExercises.map((ex) => ({ key: ex.id, label: ex.exerciseName, value: ex.id }))}
+            placeholder={DISPLAY_TITLE.Exercise}
+            value={selectedExerciseId}
+            onChange={(value) => {
+              setSelectedExerciseId(value);
+            }}
+          />
         </>
       )}
 
