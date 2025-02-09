@@ -9,6 +9,7 @@ import ProgressScreen from './ProgressScreen';
 import HomeScreen from './HomeScreen';
 import AnimatedScreen from '../components/AnimatedText';
 import { COLORS } from '../constants/theme';
+import WorkoutPlansScreen from './WorkoutPlansScreen';
 
 export default function LayoutScreen() {
   // Map old names to new keys: "Home" | "record" | "configure" | "insights"
@@ -34,6 +35,7 @@ export default function LayoutScreen() {
       break;
     case 'configure':
       content = <ExerciseSetupScreen />;
+      // content = <WorkoutPlansScreen />;
       break;
     case 'insights':
       content = <ProgressScreen />;

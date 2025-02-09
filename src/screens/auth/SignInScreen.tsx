@@ -6,6 +6,7 @@ import { auth } from '../../services/firebase/firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { COLORS, STYLES } from '../../constants/theme';
 
 type SignInScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'SignIn'>;
 
@@ -25,7 +26,7 @@ export default function SignInScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Welcome Back</Text>
+      <Text style={STYLES.heading}>Welcome Back</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -60,28 +61,22 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#121212',
+    backgroundColor: COLORS.background,
     justifyContent: 'center', 
     padding: 16 
   },
-  heading: { 
-    fontSize: 24, 
-    fontWeight: 'bold', 
-    color: '#FFFFFF',
-    marginBottom: 16 
-  },
   input: {
     borderWidth: 1,
-    borderColor: '#FF6A00',
+    borderColor: COLORS.borderColor,
     borderRadius: 6,
     padding: 8,
     marginBottom: 12,
-    color: '#FFFFFF',
-    backgroundColor: '#1A1A1A',
+    color: COLORS.textWhite,
+    backgroundColor: COLORS.backgroundDark,
   },
   switchText: {
     marginVertical: 8,
-    color: '#FFFFFF',
+    color: COLORS.textWhite,
     textAlign: 'center',
   },
 });

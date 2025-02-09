@@ -43,7 +43,13 @@ export const COLORS = {
     title: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: '#FFFFFF',
+      color: COLORS.textWhite,
+      marginBottom: 8,
+    },
+    subHeading: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: COLORS.textWhite,
       marginBottom: 8,
     },
   });
